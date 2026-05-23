@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我</title>
+    <style>
+        /* ==========================================================================
+           1. 基礎重設與核心佈局 (Reset & Core Layout)
+           ========================================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            image-rendering: pixelated; /* 確保全局像素圖案與邊框不模糊 */
+        }
+        
+        body {
+            background-color: #08080a;
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace, "Microsoft JhengHei", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 手機豎屏安全容器 */
+        #game-container {
+            width: 100%;
+            max-width: 430px; /* 標準手機寬度 */
+            height: 100vh;
+            max-height: 932px; /* 標準手機高度 */
+            border: 4px solid #3a3a45;
+            background-color: #121216;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.7);
+        }
+
+        /* ==========================================================================
+           2. 狀態畫面控制 (Screens Switching)
+           ========================================================================== */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            background-color: #121216;
+            z-index: 1;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+
+        /* ==========================================================================
+           3. 通用樸素像素大按鈕 (Pixel UI Buttons)
+           ========================================================================== */
+        .pixel-button {
+            width: 100%;
+            padding: 16px 20px;
+            background-color: #1c1c24;
+            border: 3px solid #ffffff;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 12px;
+            outline: none;
+            transition: background 0.1s;
+        }
+        
+        .pixel-button:hover:not(:disabled) {
+            background-color: #2a2a35;
+        }
+        
+        .pixel-button:active:not(:disabled) {
+            background-color: #ffffff;
+            color: #121216;
+        }
+        
+        .pixel-button:disabled {
+            border-color: #444452;
+            color: #444452;
+            background-color: #15151c;
+            cursor: not-allowed;
+        }
+
+        /* 返回與選單專用小按鈕 */
+        .nav-button {
+            padding: 8px 12px;
+            background-color: #121216;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: auto;
+            align-self: flex-start;
+            margin-bottom: 15px;
+        }
+
+        /* ==========================================================================
+           4. 讀取中畫面 (Loading Screen)
+           ========================================================================== */
+        #loading-screen {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            z-index: 10;
+        }
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid #3a3a45;
+            border-top: 4px solid #ffffff;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ==========================================================================
+           5. 遊戲主畫面 (Main Menu Screen)
+           ========================================================================== */
+        #main-menu-screen {
+            justify-content: space-between;
+            align-items: center;
+            padding: 60px 30px;
+            background: linear-gradient(180deg, #121216 0%, #1a1a24 100%);
+        }
+        
+        .game-title-area {
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .game-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffde59;
+            line-height: 1.2;
+            letter-spacing: 2px;
+        }
+        
+        .game-subtitle {
+            font-size: 14px;
+            color: #8a8a9e;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .menu-buttons {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        /* ==========================================================================
+           6. 章節與成就選單介面 (Sub-menus Layout)
+           ========================================================================== */
+        .menu-layout {
+            padding: 24px;
+        }
+        
+        .screen-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffde59;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px dashed #3a3a45;
+            padding-bottom: 10px;
+        }
+        
+        .list-scroll-view {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 4px;
+        }
+        
+        /* 滾動條像素化美化 */
+        .list-scroll-view::-webkit-scrollbar { width: 6px; }
+        .list-scroll-view::-webkit-scrollbar-track { background: #15151c; }
+        .list-scroll-view::-webkit-scrollbar-thumb { background: #3a3a45; }
+
+        /* 成就項目卡片樣式 */
+        .achievement-card {
+            border: 2px solid #3a3a45;
+            background-color: #15151c;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .achievement-card.unlocked {
+            border-color: #ffffff;
+            background-color: #1c1c24;
+        }
+        
+        .ach-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ach-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #8a8a9e;
+        }
+        
+        .achievement-card.unlocked .ach-title {
+            color: #ffde59;
+        }
+        
+        .ach-status {
+            font-size: 11px;
+            padding: 2px 6px;
+            border: 1px solid #444452;
+            color: #444452;
+        }
+        
+        .achievement-card.unlocked .ach-status {
+            border-color: #ffde59;
+            color: #ffde59;
+        }
+        
+        .ach-desc {
+            font-size: 13px;
+            color: #444452;
+            line-height: 1.4;
+        }
+        
+        .achievement-card.unlocked .ach-desc {
+            color: #d1d1e0;
+        }
+
+        /* ==========================================================================
+           7. 核心遊戲遊玩畫面 (Gameplay Screen - Custom Layout)
+           ========================================================================== */
+        #game-screen {
+            padding: 0;
+            justify-content: flex-start;
+        }
+
+        /* 上半部：大型獨立畫框 */
+        #stage-area {
+            width: 100%;
+            height: 48%; /* 佔據畫面上半部主要區塊 */
+            background-color: #1a1a24;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 16px;
+            border-bottom: 4px solid #3a3a45;
+        }
+
+        /* 左右並排的大比例角色圖片 */
+        .character-sprite {
+            width: auto;
+            height: 85%; /* 拉大立繪比例 */
+            max-width: 48%;
+            object-fit: contain;
+            transition: opacity 0.2s;
+            z-index: 2;
+        }
+        
+        /* 遊戲內左上角選單小按鈕 */
+        .game-menu-trigger {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            margin: 0;
+            z-index: 5;
+            background-color: rgba(18, 18, 22, 0.8);
+        }
+
+        /* 下半部：UI與操作指令區 */
+        #ui-area {
+            flex: 1;
+            background-color: #08080a;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        /* 精緻對話框 */
+        #dialog-box {
+            border: 3px solid #ffffff;
+            background-color: #121216;
+            padding: 14px;
+            min-height: 110px;
+            flex-shrink: 0;
+        }
+        
+        #speaker-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffde59;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        
+        #dialog-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #ffffff;
+            word-break: break-all;
+        }
+        
+        /* 打字機像素方塊游標動畫 */
+        #dialog-text::after {
+            content: ' █';
+            animation: cursorBlink 0.8s infinite;
+        }
+        @keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* 選項容器：一排一個，大尺寸與畫面等寬 */
+        #options-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-top: auto;
+        }
+        
+        #options-container .pixel-button {
+            margin-bottom: 10px;
+        }
+        #options-container .pixel-button:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <div id="loading-screen" class="screen active">
+            <div class="spinner"></div>
+            <h3>正在從雲端連接試算表資料庫...</h3>
+        </div>
+
+        <div id="main-menu-screen" class="screen">
+            <div class="game-title-area">
+                <div class="game-title">我的像素冒險</div>
+                <div class="game-subtitle">HTML5 × Google Sheets Engine</div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="pixel-button" onclick="uiStartNewGame()">新 游 戲</button>
+                <button class="pixel-button" id="continue-btn" onclick="uiContinueGame()" disabled>繼 續 遊 戲</button>
+                <button class="pixel-button" onclick="uiOpenChapters()">章 節 選 擇</button>
+                <button class="pixel-button" onclick="uiOpenAchievements()">成 就 圖 鑑</button>
+            </div>
+        </div>
+
+        <div id="chapter-screen" class="screen menu-layout">
+            <button class="nav-button" onclick="switchScreen('main-menu-screen')">◀ 返回主選單</button>
+            <div class="screen-title">章 節 選 擇</div>
+            <div class="list-scroll-view" id="chapter-list">
+                </div>
+        </div>
+
+        <div id="ach-screen" class="screen menu-layout">
+            <button class="nav-button" onclick="switchScreen('main-menu-screen')">◀ 返回主選單</button>
+            <div class="screen-title">成 就 圖 鑑</div>
+            <div class="list-scroll-view" id="ach-list">
+                </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div id="stage-area">
+                <button class="nav-button game-menu-trigger" onclick="uiBackToMenuFromGame()">◀ 選單</button>
+                <img id="char-left" class="character-sprite" src="" alt="">
+                <img id="char-right" class="character-sprite" src="" alt="">
+            </div>
+            
+            <div id="ui-area">
+                <div id="dialog-box">
+                    <div id="speaker-name">載入中</div>
+                    <div id="dialog-text">正在讀取文字內容...</div>
+                </div>
+                
+                <div id="options-container">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 🛠️ 【請在此配置您完整的 Google 試算表唯一識別 ID】
+        const SPREADSHEET_ID = '1zamjGcBczRM7aKVOoUVaRCtiBI506Ht5F8SLIU4_pwA'; 
+        
+        // 利用 Google Sheets Query API 以 JSON 格式一併異步撈取所有結構數據
+        const BASE_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
+
+        // 核心資料緩存
+        let scriptData = {};    // 存放劇情文字表 (分頁 1)
+        let chapterData = [];   // 存放章節表 (分頁 2)
+        let achData = [];       // 存放成就表 (分頁 3)
+        
+        // 非同步效果計時指針
+        let typeWriterTimeout = null;
+
+        // 頁面初始化：生命週期安全載入
+        window.addEventListener('DOMContentLoaded', () => {
+            loadGameDatabase();
+        });
+
+        /**
+         * 異步載入雲端試算表資料庫中所有分頁的數據
+         */
+        /**
+         * 異步載入雲端試算表資料庫中所有分頁的數據（升級版：直接指定分頁名稱，防止編號錯亂）
+         */
+        async function loadGameDatabase() {
+            try {
+                // 1. 使用分頁名稱「Script」直接抓取
+                const resScript = await fetch(`${BASE_URL}&sheet=Script`);
+                const textScript = await resScript.text();
+                parseScriptTable(textScript);
+
+                // 2. 使用分頁名稱「Chapters」直接抓取
+                try {
+                    const resChap = await fetch(`${BASE_URL}&sheet=Chapters`);
+                    const textChap = await resChap.text();
+                    parseChapterTable(textChap);
+                } catch(e) {
+                    console.warn("未檢測到自定義章節分頁，啟用預設備用模擬數據。");
+                    generateFallbackChapters();
+                }
+
+                // 3. 使用分頁名稱「Achievements」直接抓取
+                try {
+                    const resAch = await fetch(`${BASE_URL}&sheet=Achievements`);
+                    const textAch = await resAch.text();
+                    parseAchievementTable(textAch);
+                } catch(e) {
+                    console.warn("未檢測到自定義成就分頁，啟用預設備用模擬數據。");
+                    generateFallbackAchievements();
+                }
+
+                // 全結構資料建置完成，刷新 UI 狀態
+                checkLocalStorageSaveState();
+                switchScreen('main-menu-screen');
+
+            } catch (error) {
+                alert('【系統出錯】無法成功獲取雲端資料。請仔細核對您的 SPREADSHEET_ID 是否正確，且該試算表是否已開啟「發布到網路」。');
+                console.error(error);
+            }
+        }
+
+        /* ==========================================================================
+           解析器模組群 (Table Parsers)
+           ========================================================================== */
+        
+        function cleanGoogleJson(rawText) {
+            const startIdx = rawText.indexOf('{');
+            const endIdx = rawText.lastIndexOf('}');
+            return JSON.parse(rawText.substring(startIdx, endIdx + 1));
+        }
+
+        function parseScriptTable(rawText) {
+            const jsonObj = cleanGoogleJson(rawText);
+            const rows = jsonObj.table.rows;
+            
+            rows.forEach((row, index) => {
+                if (index === 0) return; // 跳過第一行標頭欄定義
+                
+                const id = row.c[0]?.v?.toString().trim();
+                if (id) {
+                    scriptData[id] = {
+                        id: id,
+                        name: row.c[1]?.v || '',
+                        text: row.c[2]?.v || '',
+                        bg: row.c[3]?.v || '',
+                        charLeft: row.c[4]?.v || '',
+                        charRight: row.c[5]?.v || '',
+                        optAText: row.c[6]?.v || '',
+                        optATarget: row.c[7]?.v?.toString().trim() || '',
+                        optBText: row.c[8]?.v || '',
+                        optBTarget: row.c[9]?.v?.toString().trim() || '',
+                        triggerAch: row.c[10]?.v?.toString().trim() || ''
+                    };
+                }
+            });
+        }
+
+        function parseChapterTable(rawText) {
+            const jsonObj = cleanGoogleJson(rawText);
+            const rows = jsonObj.table.rows;
+            chapterData = [];
+            
+            rows.forEach((row, index) => {
+                if (index === 0) return;
+                const chId = row.c[0]?.v;
+                if (chId) {
+                    chapterData.push({
+                        id: chId,
+                        name: row.c[1]?.v || '未命名章節',
+                        startId: row.c[2]?.v?.toString().trim() || '001'
+                    });
+                }
+            });
+            if(chapterData.length === 0) generateFallbackChapters();
+        }
+
+        function parseAchievementTable(rawText) {
+            const jsonObj = cleanGoogleJson(rawText);
+            const rows = jsonObj.table.rows;
+            achData = [];
+            
+            rows.forEach((row, index) => {
+                if (index === 0) return;
+                const achId = row.c[0]?.v;
+                if (achId) {
+                    achData.push({
+                        id: achId,
+                        title: row.c[1]?.v || '未知成就',
+                        desc: row.c[2]?.v || '無描述內容。'
+                    });
+                }
+            });
+            if(achData.length === 0) generateFallbackAchievements();
+        }
+
+        function generateFallbackChapters() {
+            chapterData = [
+                { id: 'CH1', name: '第一章：神祕的工坊', startId: '001' },
+                { id: 'CH2', name: '第二章：未知的抉擇', startId: '002' }
+            ];
+        }
+
+        function generateFallbackAchievements() {
+            achData = [
+                { id: 'ACH_01', title: '踏出第一步', desc: '成功解鎖第一個主線選項動作。' },
+                { id: 'ACH_02', title: '命運的歸宿', desc: '觸發了故事分支的第一個完整結局。' }
+            ];
+        }
+
+        /* ==========================================================================
+           系統邏輯與介面狀態切換核心 (Game Logic & UI State Control)
+           ========================================================================== */
+        
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function checkLocalStorageSaveState() {
+            const localSaveSlot = localStorage.getItem('pixel_adventure_save_slot');
+            const continueBtn = document.getElementById('continue-btn');
+            if (localSaveSlot && scriptData[localSaveSlot]) {
+                continueBtn.disabled = false;
+            } else {
+                continueBtn.disabled = true;
+            }
+        }
+
+        function uiStartNewGame() {
+            switchScreen('game-screen');
+            playSceneEngine('001'); // 新遊戲預設由 ID 001 引導
+        }
+
+        function uiContinueGame() {
+            const localSaveSlot = localStorage.getItem('pixel_adventure_save_slot');
+            switchScreen('game-screen');
+            playSceneEngine(localSaveSlot);
+        }
+
+        function uiOpenChapters() {
+            const container = document.getElementById('chapter-list');
+            container.innerHTML = '';
+            
+            chapterData.forEach(ch => {
+                const btn = document.createElement('button');
+                btn.className = 'pixel-button';
+                btn.innerText = ch.name;
+                btn.onclick = () => {
+                    switchScreen('game-screen');
+                    playSceneEngine(ch.startId);
+                };
+                container.appendChild(btn);
+            });
+            switchScreen('chapter-screen');
+        }
+
+        function uiOpenAchievements() {
+            const container = document.getElementById('ach-list');
+            container.innerHTML = '';
+            
+            achData.forEach(ach => {
+                const isUnlocked = localStorage.getItem(`ach_status_${ach.id}`) === 'unlocked';
+                
+                const card = document.createElement('div');
+                card.className = `achievement-card ${isUnlocked ? 'unlocked' : ''}`;
+                
+                card.innerHTML = `
+                    <div class="ach-header">
+                        <span class="ach-title">${isUnlocked ? ach.title : '【 隱藏成就 】'}</span>
+                        <span class="ach-status">${isUnlocked ? '已達成' : '未解鎖'}</span>
+                    </div>
+                    <div class="ach-desc">${isUnlocked ? ach.desc : '繼續推進故事以解鎖隱藏的特殊成就。'}</div>
+                `;
+                container.appendChild(card);
+            });
+            switchScreen('ach-screen');
+        }
+
+        function uiBackToMenuFromGame() {
+            checkLocalStorageSaveState();
+            switchScreen('main-menu-screen');
+        }
+
+        /* ==========================================================================
+           核心劇情文本播放與指令控制引擎 (Main Story Playback Engine)
+           ========================================================================== */
+        
+        function playSceneEngine(sceneId) {
+            const scene = scriptData[sceneId];
+            if (!scene) {
+                alert(`【核心引擎警告】無法從試算表資料中索引到 ID: [${sceneId}] 的劇情列。`);
+                uiBackToMenuFromGame();
+                return;
+            }
+
+            // 1. 本地儲存自動存檔
+            localStorage.setItem('pixel_adventure_save_slot', sceneId);
+
+            // 2. 觸發成就解鎖檢測
+            if (scene.triggerAch && scene.triggerAch.length > 0) {
+                const achId = scene.triggerAch;
+                if(localStorage.getItem(`ach_status_${achId}`) !== 'unlocked') {
+                    localStorage.setItem(`ach_status_${achId}`, 'unlocked');
+                    console.log(`🏆 恭喜解鎖本地系統成就代碼: ${achId}`);
+                }
+            }
+
+            // 3. 2D 畫框渲染更新控制
+            const stage = document.getElementById('stage-area');
+            stage.style.backgroundImage = scene.bg ? `url(${scene.bg})` : 'none';
+
+            const imgLeft = document.getElementById('char-left');
+            if (scene.charLeft && scene.charLeft.trim() !== '') {
+                imgLeft.src = scene.charLeft;
+                imgLeft.style.opacity = '1';
+            } else {
+                imgLeft.style.opacity = '0';
+            }
+
+            const imgRight = document.getElementById('char-right');
+            if (scene.charRight && scene.charRight.trim() !== '') {
+                imgRight.src = scene.charRight;
+                imgRight.style.opacity = '1';
+            } else {
+                imgRight.style.opacity = '0';
+            }
+
+            // 4. 對話框說話者名稱刷新
+            document.getElementById('speaker-name').innerText = scene.name ? scene.name : '（系統提示）';
+
+            // 5. 啟動非同步打字機特效
+            runTypeWriterAnimation(scene.text);
+
+            // 6. 清空並動態繪製樸素等寬大按鈕指令
+            const optionsBox = document.getElementById('options-container');
+            optionsBox.innerHTML = '';
+
+            if (scene.optAText && scene.optAText.trim() !== '') {
+                appendFullWidthOption(scene.optAText, scene.optATarget);
+            }
+            
+            if (scene.optBText && scene.optBText.trim() !== '') {
+                appendFullWidthOption(scene.optBText, scene.optBTarget);
+            }
+
+            // 降級機制：當劇本未提供任何按鈕時，自動生成「點擊繼續」的單一無條件按鈕回到主選單
+            if (optionsBox.children.length === 0) {
+                appendFullWidthOption("故事暫時告一段落（點擊返回主畫面）", "MENU_BACK");
+            }
+        }
+
+        function runTypeWriterAnimation(textStr) {
+            clearTimeout(typeWriterTimeout);
+            const dialogTextElement = document.getElementById('dialog-text');
+            dialogTextElement.innerText = '';
+            
+            let charIndex = 0;
+            function step() {
+                if (charIndex < textStr.length) {
+                    dialogTextElement.innerText += textStr.charAt(charIndex);
+                    charIndex++;
+                    typeWriterTimeout = setTimeout(step, 40); // 打字速度控制在 40 毫秒/字
+                }
+            }
+            step();
+        }
+
+        function appendFullWidthOption(buttonText, targetSceneId) {
+            const btn = document.createElement('button');
+            btn.className = 'pixel-button';
+            btn.innerText = buttonText;
+            
+            btn.onclick = () => {
+                if (targetSceneId === "MENU_BACK" || !targetSceneId || targetSceneId.trim() === "") {
+                    uiBackToMenuFromGame();
+                } else {
+                    playSceneEngine(targetSceneId);
+                }
+            };
+            
+            document.getElementById('options-container').appendChild(btn);
+        }
+    </script>
+</body>
+</html>
