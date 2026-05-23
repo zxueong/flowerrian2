@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我</title>
+    <title>花語</title>
     <style>
         /* ==========================================================================
            1. 基礎重設與核心佈局 (Reset & Core Layout)
@@ -339,22 +339,23 @@
         }
 
         /* ==========================================================================
-           🌟 新增：成就即時達成彈出通知特效 (Pixel Toast Notification)
+           🌟 質感升級版：半透明、含詳細說明的成就彈出通知
            ========================================================================== */
         #achievement-toast {
             position: absolute;
-            top: -100px; /* 預設藏在畫面上方 */
+            top: -120px; /* 預設藏在畫面上方 */
             left: 5%;
             width: 90%;
-            background-color: #1c1c24;
-            border: 3px solid #ffde59; /* 亮黃色像素邊框 */
+            background-color: rgba(28, 28, 36, 0.85); /* 核心：調低底色透明度到 85% */
+            backdrop-filter: blur(4px); /* 讓後方舞台畫面微微模糊 */
+            border: 3px solid rgba(255, 222, 89, 0.9); /* 邊框也帶有微透明像素感 */
             padding: 12px 16px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            z-index: 999; /* 確保在最上層 */
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.6);
-            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 彈跳動畫 */
+            gap: 2px;
+            z-index: 999; /* 確保在舞台最前線 */
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 經典像素回彈特效 */
         }
 
         #achievement-toast.show {
@@ -362,16 +363,24 @@
         }
 
         .toast-header {
-            font-size: 12px;
+            font-size: 11px; /* 微縮小標頭 */
             color: #ffde59;
             font-weight: bold;
             letter-spacing: 1px;
         }
 
         .toast-title {
-            font-size: 16px;
+            font-size: 15px;
             color: #ffffff;
             font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        /* 🌟 新增：字體縮小、柔和灰色的成就說明外觀 */
+        .toast-desc {
+            font-size: 11px; 
+            color: #b2b2c2; 
+            line-height: 1.3;
         }
     </style>
 </head>
@@ -382,6 +391,7 @@
         <div id="achievement-toast">
             <div class="toast-header">🏆 獲得成就！</div>
             <div class="toast-title" id="toast-title-text">成就名稱</div>
+            <div class="toast-desc" id="toast-desc-text">這裡會顯示成就的詳細描述內容...</div>
         </div>
         
         <div id="loading-screen" class="screen active">
@@ -430,7 +440,7 @@
     </div>
 
     <script>
-        // 🛠️ 【請在此配置您完整的 Google 試算表唯一識別 ID】
+        // 🛠️ 【已保留您專屬的 Google 試算表唯一識別 ID】
         const SPREADSHEET_ID = '1zamjGcBczRM7aKVOoUVaRCtiBI506Ht5F8SLIU4_pwA'; 
         
         const BASE_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
@@ -585,21 +595,27 @@
             switchScreen('main-menu-screen');
         }
 
-        /* 🌟 新增：彈出成就通知的黑魔法 */
+        /* 🌟 升級驅動：整合顯示標題與詳細描述的彈窗系統 */
         function triggerAchievementToast(achId) {
             const achObj = achMap[achId];
+            
+            // 從快取中抓取試算表資料，找不到就用內建字串防呆
             const titleText = achObj ? achObj.title : achId;
+            const descText = achObj ? achObj.desc : '恭喜解鎖隱藏成就！';
             
             const toast = document.getElementById('achievement-toast');
-            document.getElementById('toast-title-text').innerText = titleText;
             
-            // 讓彈窗滑下來
+            // 將內容渲染到對應位置
+            document.getElementById('toast-title-text').innerText = titleText;
+            document.getElementById('toast-desc-text').innerText = descText;
+            
+            // 觸發 CSS 彈落動畫
             toast.classList.add('show');
             
-            // 3秒後自動縮回去
+            // 因為增加了描述文字，稍微加長至 4 秒讓玩家有充足時間閱讀
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000);
+            }, 4000);
         }
 
         /* ==========================================================================
@@ -620,7 +636,7 @@
                 const achId = scene.triggerAch;
                 if(localStorage.getItem(`ach_status_${achId}`) !== 'unlocked') {
                     localStorage.setItem(`ach_status_${achId}`, 'unlocked');
-                    // 呼叫彈窗功能！
+                    // 呼叫全新的彈窗功能
                     triggerAchievementToast(achId);
                 }
             }
