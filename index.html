@@ -12,7 +12,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            image-rendering: pixelated; /* 確保全局像素圖案與邊框不模糊 */
+            image-rendering: pixelated;
         }
         
         body {
@@ -29,9 +29,9 @@
         /* 手機豎屏安全容器 */
         #game-container {
             width: 100%;
-            max-width: 430px; /* 標準手機寬度 */
+            max-width: 430px; 
             height: 100vh;
-            max-height: 932px; /* 標準手機高度 */
+            max-height: 932px; 
             border: 4px solid #3a3a45;
             background-color: #121216;
             position: relative;
@@ -95,7 +95,6 @@
             cursor: not-allowed;
         }
 
-        /* 返回與選單專用小按鈕 */
         .nav-button {
             padding: 8px 12px;
             background-color: #121216;
@@ -130,7 +129,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* ==========================================================================
-           5. 遊戲主畫面 (Main Menu Screen)
+           5. 遊戲主畫面 (Main Menu Screen - 已移除章節按鈕)
            ========================================================================== */
         #main-menu-screen {
             justify-content: space-between;
@@ -161,11 +160,11 @@
         
         .menu-buttons {
             width: 100%;
-            margin-bottom: 40px;
+            margin-bottom: 60px;
         }
 
         /* ==========================================================================
-           6. 章節與成就選單介面 (Sub-menus Layout)
+           6. 成就圖鑑介面
            ========================================================================== */
         .menu-layout {
             padding: 24px;
@@ -188,12 +187,10 @@
             padding-right: 4px;
         }
         
-        /* 滾動條像素化美化 */
         .list-scroll-view::-webkit-scrollbar { width: 6px; }
         .list-scroll-view::-webkit-scrollbar-track { background: #15151c; }
         .list-scroll-view::-webkit-scrollbar-thumb { background: #3a3a45; }
 
-        /* 成就項目卡片樣式 */
         .achievement-card {
             border: 2px solid #3a3a45;
             background-color: #15151c;
@@ -248,17 +245,16 @@
         }
 
         /* ==========================================================================
-           7. 核心遊戲遊玩畫面 (Gameplay Screen - Custom Layout)
+           7. 核心遊戲遊玩畫面 (Gameplay Screen)
            ========================================================================== */
         #game-screen {
             padding: 0;
             justify-content: flex-start;
         }
 
-        /* 上半部：大型獨立畫框 */
         #stage-area {
             width: 100%;
-            height: 48%; /* 佔據畫面上半部主要區塊 */
+            height: 48%; 
             background-color: #1a1a24;
             background-size: cover;
             background-position: center;
@@ -271,17 +267,15 @@
             border-bottom: 4px solid #3a3a45;
         }
 
-        /* 左右並排的大比例角色圖片 */
         .character-sprite {
             width: auto;
-            height: 85%; /* 拉大立繪比例 */
+            height: 85%; 
             max-width: 48%;
             object-fit: contain;
             transition: opacity 0.2s;
             z-index: 2;
         }
         
-        /* 遊戲內左上角選單小按鈕 */
         .game-menu-trigger {
             position: absolute;
             top: 16px;
@@ -291,7 +285,6 @@
             background-color: rgba(18, 18, 22, 0.8);
         }
 
-        /* 下半部：UI與操作指令區 */
         #ui-area {
             flex: 1;
             background-color: #08080a;
@@ -302,7 +295,6 @@
             gap: 12px;
         }
 
-        /* 精緻對話框 */
         #dialog-box {
             border: 3px solid #ffffff;
             background-color: #121216;
@@ -326,14 +318,12 @@
             word-break: break-all;
         }
         
-        /* 打字機像素方塊游標動畫 */
         #dialog-text::after {
             content: ' █';
             animation: cursorBlink 0.8s infinite;
         }
         @keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* 選項容器：一排一個，大尺寸與畫面等寬 */
         #options-container {
             width: 100%;
             display: flex;
@@ -347,36 +337,69 @@
         #options-container .pixel-button:last-child {
             margin-bottom: 0;
         }
+
+        /* ==========================================================================
+           🌟 新增：成就即時達成彈出通知特效 (Pixel Toast Notification)
+           ========================================================================== */
+        #achievement-toast {
+            position: absolute;
+            top: -100px; /* 預設藏在畫面上方 */
+            left: 5%;
+            width: 90%;
+            background-color: #1c1c24;
+            border: 3px solid #ffde59; /* 亮黃色像素邊框 */
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 999; /* 確保在最上層 */
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.6);
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 彈跳動畫 */
+        }
+
+        #achievement-toast.show {
+            top: 20px; /* 彈下來的位置 */
+        }
+
+        .toast-header {
+            font-size: 12px;
+            color: #ffde59;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .toast-title {
+            font-size: 16px;
+            color: #ffffff;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
     <div id="game-container">
         
+        <div id="achievement-toast">
+            <div class="toast-header">🏆 獲得成就！</div>
+            <div class="toast-title" id="toast-title-text">成就名稱</div>
+        </div>
+        
         <div id="loading-screen" class="screen active">
             <div class="spinner"></div>
-            <h3>正在從雲端連接試算表資料庫...</h3>
+            <h3>正在連接...</h3>
         </div>
 
         <div id="main-menu-screen" class="screen">
             <div class="game-title-area">
-                <div class="game-title">我的像素冒險</div>
-                <div class="game-subtitle">HTML5 × Google Sheets Engine</div>
+                <div class="game-title">花語</div>
+                <div class="game-subtitle">あなたの側に居たかっただけなのに</div>
             </div>
             
             <div class="menu-buttons">
                 <button class="pixel-button" onclick="uiStartNewGame()">新 游 戲</button>
                 <button class="pixel-button" id="continue-btn" onclick="uiContinueGame()" disabled>繼 續 遊 戲</button>
-                <button class="pixel-button" onclick="uiOpenChapters()">章 節 選 擇</button>
                 <button class="pixel-button" onclick="uiOpenAchievements()">成 就 圖 鑑</button>
             </div>
-        </div>
-
-        <div id="chapter-screen" class="screen menu-layout">
-            <button class="nav-button" onclick="switchScreen('main-menu-screen')">◀ 返回主選單</button>
-            <div class="screen-title">章 節 選 擇</div>
-            <div class="list-scroll-view" id="chapter-list">
-                </div>
         </div>
 
         <div id="ach-screen" class="screen menu-layout">
@@ -410,46 +433,26 @@
         // 🛠️ 【請在此配置您完整的 Google 試算表唯一識別 ID】
         const SPREADSHEET_ID = '1zamjGcBczRM7aKVOoUVaRCtiBI506Ht5F8SLIU4_pwA'; 
         
-        // 利用 Google Sheets Query API 以 JSON 格式一併異步撈取所有結構數據
         const BASE_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
 
-        // 核心資料緩存
-        let scriptData = {};    // 存放劇情文字表 (分頁 1)
-        let chapterData = [];   // 存放章節表 (分頁 2)
-        let achData = [];       // 存放成就表 (分頁 3)
+        let scriptData = {};    
+        let achData = [];       
+        let achMap = {}; // 用來快速查成就名稱的物件
         
-        // 非同步效果計時指針
         let typeWriterTimeout = null;
 
-        // 頁面初始化：生命週期安全載入
         window.addEventListener('DOMContentLoaded', () => {
             loadGameDatabase();
         });
 
-        /**
-         * 異步載入雲端試算表資料庫中所有分頁的數據
-         */
-        /**
-         * 異步載入雲端試算表資料庫中所有分頁的數據（升級版：直接指定分頁名稱，防止編號錯亂）
-         */
         async function loadGameDatabase() {
             try {
-                // 1. 使用分頁名稱「Script」直接抓取
+                // 1. 抓取劇情 Script (防刷錯升級版)
                 const resScript = await fetch(`${BASE_URL}&sheet=Script`);
                 const textScript = await resScript.text();
                 parseScriptTable(textScript);
 
-                // 2. 使用分頁名稱「Chapters」直接抓取
-                try {
-                    const resChap = await fetch(`${BASE_URL}&sheet=Chapters`);
-                    const textChap = await resChap.text();
-                    parseChapterTable(textChap);
-                } catch(e) {
-                    console.warn("未檢測到自定義章節分頁，啟用預設備用模擬數據。");
-                    generateFallbackChapters();
-                }
-
-                // 3. 使用分頁名稱「Achievements」直接抓取
+                // 2. 抓取成就 Achievements (防刷錯升級版)
                 try {
                     const resAch = await fetch(`${BASE_URL}&sheet=Achievements`);
                     const textAch = await resAch.text();
@@ -459,7 +462,6 @@
                     generateFallbackAchievements();
                 }
 
-                // 全結構資料建置完成，刷新 UI 狀態
                 checkLocalStorageSaveState();
                 switchScreen('main-menu-screen');
 
@@ -469,10 +471,6 @@
             }
         }
 
-        /* ==========================================================================
-           解析器模組群 (Table Parsers)
-           ========================================================================== */
-        
         function cleanGoogleJson(rawText) {
             const startIdx = rawText.indexOf('{');
             const endIdx = rawText.lastIndexOf('}');
@@ -484,7 +482,7 @@
             const rows = jsonObj.table.rows;
             
             rows.forEach((row, index) => {
-                if (index === 0) return; // 跳過第一行標頭欄定義
+                if (index === 0) return; 
                 
                 const id = row.c[0]?.v?.toString().trim();
                 if (id) {
@@ -505,62 +503,36 @@
             });
         }
 
-        function parseChapterTable(rawText) {
-            const jsonObj = cleanGoogleJson(rawText);
-            const rows = jsonObj.table.rows;
-            chapterData = [];
-            
-            rows.forEach((row, index) => {
-                if (index === 0) return;
-                const chId = row.c[0]?.v;
-                if (chId) {
-                    chapterData.push({
-                        id: chId,
-                        name: row.c[1]?.v || '未命名章節',
-                        startId: row.c[2]?.v?.toString().trim() || '001'
-                    });
-                }
-            });
-            if(chapterData.length === 0) generateFallbackChapters();
-        }
-
         function parseAchievementTable(rawText) {
             const jsonObj = cleanGoogleJson(rawText);
             const rows = jsonObj.table.rows;
             achData = [];
+            achMap = {};
             
             rows.forEach((row, index) => {
                 if (index === 0) return;
-                const achId = row.c[0]?.v;
+                const achId = row.c[0]?.v?.toString().trim();
                 if (achId) {
-                    achData.push({
+                    const item = {
                         id: achId,
                         title: row.c[1]?.v || '未知成就',
                         desc: row.c[2]?.v || '無描述內容。'
-                    });
+                    };
+                    achData.push(item);
+                    achMap[achId] = item; // 快取方便隨時調用名稱
                 }
             });
             if(achData.length === 0) generateFallbackAchievements();
         }
 
-        function generateFallbackChapters() {
-            chapterData = [
-                { id: 'CH1', name: '第一章：神祕的工坊', startId: '001' },
-                { id: 'CH2', name: '第二章：未知的抉擇', startId: '002' }
-            ];
-        }
-
         function generateFallbackAchievements() {
             achData = [
                 { id: 'ACH_01', title: '踏出第一步', desc: '成功解鎖第一個主線選項動作。' },
-                { id: 'ACH_02', title: '命運的歸宿', desc: '觸發了故事分支的第一個完整結局。' }
+                { id: 'ACH_02', title: '黑夜降臨', desc: '因為猶豫不決而被吞噬在無盡的黑暗之中。' }
             ];
+            achData.forEach(a => achMap[a.id] = a);
         }
 
-        /* ==========================================================================
-           系統邏輯與介面狀態切換核心 (Game Logic & UI State Control)
-           ========================================================================== */
-        
         function switchScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -578,7 +550,7 @@
 
         function uiStartNewGame() {
             switchScreen('game-screen');
-            playSceneEngine('001'); // 新遊戲預設由 ID 001 引導
+            playSceneEngine('001'); 
         }
 
         function uiContinueGame() {
@@ -587,30 +559,12 @@
             playSceneEngine(localSaveSlot);
         }
 
-        function uiOpenChapters() {
-            const container = document.getElementById('chapter-list');
-            container.innerHTML = '';
-            
-            chapterData.forEach(ch => {
-                const btn = document.createElement('button');
-                btn.className = 'pixel-button';
-                btn.innerText = ch.name;
-                btn.onclick = () => {
-                    switchScreen('game-screen');
-                    playSceneEngine(ch.startId);
-                };
-                container.appendChild(btn);
-            });
-            switchScreen('chapter-screen');
-        }
-
         function uiOpenAchievements() {
             const container = document.getElementById('ach-list');
             container.innerHTML = '';
             
             achData.forEach(ach => {
                 const isUnlocked = localStorage.getItem(`ach_status_${ach.id}`) === 'unlocked';
-                
                 const card = document.createElement('div');
                 card.className = `achievement-card ${isUnlocked ? 'unlocked' : ''}`;
                 
@@ -631,10 +585,26 @@
             switchScreen('main-menu-screen');
         }
 
+        /* 🌟 新增：彈出成就通知的黑魔法 */
+        function triggerAchievementToast(achId) {
+            const achObj = achMap[achId];
+            const titleText = achObj ? achObj.title : achId;
+            
+            const toast = document.getElementById('achievement-toast');
+            document.getElementById('toast-title-text').innerText = titleText;
+            
+            // 讓彈窗滑下來
+            toast.classList.add('show');
+            
+            // 3秒後自動縮回去
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
         /* ==========================================================================
-           核心劇情文本播放與指令控制引擎 (Main Story Playback Engine)
+           核心劇情文本播放與指令控制引擎
            ========================================================================== */
-        
         function playSceneEngine(sceneId) {
             const scene = scriptData[sceneId];
             if (!scene) {
@@ -643,19 +613,18 @@
                 return;
             }
 
-            // 1. 本地儲存自動存檔
             localStorage.setItem('pixel_adventure_save_slot', sceneId);
 
-            // 2. 觸發成就解鎖檢測
+            // 👑 偵測成就解鎖並即時彈窗！
             if (scene.triggerAch && scene.triggerAch.length > 0) {
                 const achId = scene.triggerAch;
                 if(localStorage.getItem(`ach_status_${achId}`) !== 'unlocked') {
                     localStorage.setItem(`ach_status_${achId}`, 'unlocked');
-                    console.log(`🏆 恭喜解鎖本地系統成就代碼: ${achId}`);
+                    // 呼叫彈窗功能！
+                    triggerAchievementToast(achId);
                 }
             }
 
-            // 3. 2D 畫框渲染更新控制
             const stage = document.getElementById('stage-area');
             stage.style.backgroundImage = scene.bg ? `url(${scene.bg})` : 'none';
 
@@ -675,13 +644,10 @@
                 imgRight.style.opacity = '0';
             }
 
-            // 4. 對話框說話者名稱刷新
             document.getElementById('speaker-name').innerText = scene.name ? scene.name : '（系統提示）';
 
-            // 5. 啟動非同步打字機特效
             runTypeWriterAnimation(scene.text);
 
-            // 6. 清空並動態繪製樸素等寬大按鈕指令
             const optionsBox = document.getElementById('options-container');
             optionsBox.innerHTML = '';
 
@@ -693,7 +659,6 @@
                 appendFullWidthOption(scene.optBText, scene.optBTarget);
             }
 
-            // 降級機制：當劇本未提供任何按鈕時，自動生成「點擊繼續」的單一無條件按鈕回到主選單
             if (optionsBox.children.length === 0) {
                 appendFullWidthOption("故事暫時告一段落（點擊返回主畫面）", "MENU_BACK");
             }
@@ -709,7 +674,7 @@
                 if (charIndex < textStr.length) {
                     dialogTextElement.innerText += textStr.charAt(charIndex);
                     charIndex++;
-                    typeWriterTimeout = setTimeout(step, 40); // 打字速度控制在 40 毫秒/字
+                    typeWriterTimeout = setTimeout(step, 40); 
                 }
             }
             step();
